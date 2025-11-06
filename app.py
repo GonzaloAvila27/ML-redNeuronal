@@ -225,3 +225,49 @@ probar_nueva_figura(tipo='circulo', tamaño=25)
 probar_nueva_figura(tipo='cuadrado', tamaño=40)
 probar_nueva_figura(tipo='circulo', tamaño=15) # Un círculo más pequeño
 probar_nueva_figura(tipo='cuadrado', tamaño=20) # Un cuadrado más pequeño
+
+
+# ===============================================================
+# PRUEBAS DE ROBUSTEZ: FIGURAS CON RUIDO Y DIFERENTES TAMAÑOS
+# ===============================================================
+
+def probar_figuras_con_ruido(num_pruebas=5):
+    """
+    Genera figuras aleatorias con ruido y evalúa la predicción del modelo.
+    """
+    for i in range(num_pruebas):
+        tipo = np.random.choice(['circulo', 'cuadrado'])
+        tamaño = np.random.randint(15, 45)
+        imagen_prueba = np.zeros((100, 100), dtype=np.uint8)
+
+        if tipo == 'circulo':
+            rr, cc = disk((50, 50), radius=tamaño)
+            etiqueta_real = 0
+        else:
+            esquina = 50 - tamaño // 2
+            rr, cc = rectangle(start=(esquina, esquina), extent=(tamaño, tamaño), shape=imagen_prueba.shape)
+            etiqueta_real = 1
+
+        imagen_prueba[rr, cc] = 255
+
+        # Añadimos ruido aleatorio
+        ruido = np.random.randint(0, 80, (100, 100), dtype=np.uint8)
+        imagen_con_ruido = np.clip(imagen_prueba + ruido, 0, 255)
+
+        # Predicción
+        caracteristicas = extraer_caracteristicas([imagen_con_ruido])
+        prediccion = modelo.predict(caracteristicas)[0]
+
+        # Visualización
+        plt.imshow(imagen_con_ruido, cmap='gray')
+        nombre_real = 'Círculo' if etiqueta_real == 0 else 'Cuadrado'
+        nombre_pred = 'Círculo' if prediccion == 0 else 'Cuadrado'
+        plt.title(f"Pred: {nombre_pred} | Real: {nombre_real}")
+        plt.axis('off')
+        plt.show()
+
+        correcto = "✅ Correcto" if prediccion == etiqueta_real else "❌ Incorrecto"
+        print(f"Figura {i+1}: {nombre_real} → Predicho: {nombre_pred} → {correcto}")
+
+# Ejecutar las pruebas
+probar_figuras_con_ruido(num_pruebas=6)
